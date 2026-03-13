@@ -15,8 +15,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+
+import os
 from rest_framework.routers import DefaultRouter
 from . import views
+
 
 router = DefaultRouter()
 router.register(r'users', views.UserViewSet)
@@ -25,9 +28,26 @@ router.register(r'activities', views.ActivityViewSet)
 router.register(r'workouts', views.WorkoutViewSet)
 router.register(r'leaderboards', views.LeaderboardViewSet)
 
+
+# Custom api_root to use CODESPACE_NAME env variable for endpoint URLs
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+
+@api_view(['GET'])
+def api_root(request, format=None):
+    codespace_name = os.environ.get('CODESPACE_NAME', 'localhost')
+    base_url = f"https://{codespace_name}-8000.app.github.dev/api" if codespace_name != 'localhost' else "http://localhost:8000/api"
+    return Response({
+        'users': f'{base_url}/users/',
+        'teams': f'{base_url}/teams/',
+        'activities': f'{base_url}/activities/',
+        'workouts': f'{base_url}/workouts/',
+        'leaderboards': f'{base_url}/leaderboards/',
+    })
+
 urlpatterns = [
-    path('', views.api_root, name='api-root'),
-    path('', include(router.urls)),
+    path('api/', api_root, name='api-root'),
+    path('api/', include(router.urls)),
     path('admin/', admin.site.urls),
 ]
 """octofit_tracker URL Configuration
